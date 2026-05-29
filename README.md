@@ -15,23 +15,48 @@ Then open:
 http://localhost:4266
 ```
 
-The app uses Node's built-in HTTP server, LangGraph for the intake workflow, and `data/meals.json` for local meal storage.
+The app uses Node's built-in HTTP server, LangGraph for the intake workflow, and either Supabase or `data/meals.json` for meal storage.
 
 ## Log Meals
 
-Open the app and go to the `Log Meal` tab. Pick the date and meal type, write the raw meal text, run the agents, then publish the generated public caption. The meal is appended to `data/meals.json`.
+Open the app and go to the `Log Meal` tab. Pick the date and meal type, write the raw meal text, run the agents, then publish the generated public caption. The meal is written to Supabase when configured, otherwise it is appended to `data/meals.json`.
 
-On Vercel, the seeded public log is deployable as a read-only preview. Persistent hosted writes need a database or durable storage before public logging/comments can be shared across visitors.
+On Vercel, persistent hosted writes require Supabase env vars. Without them, the app can still serve seeded data and run analysis, but public logging/comments remain blocked because serverless file writes are not durable.
 
 ## Backend
 
 The backend is split between `server.mjs` for local development and Vercel serverless handlers in `api/` for production. Both use the same shared modules in `src/`:
 
-- `src/store.mjs` reads and writes meal records.
+- `src/store.mjs` reads and writes meal records through Supabase when configured, with a local JSON fallback.
 - `src/stats.mjs` computes the public dashboard metrics.
 - `src/agentGraph.mjs` runs the LangGraph intake workflow.
 
-The current hosted backend can read seeded data and run analysis, but durable public writes are intentionally blocked on Vercel until a database or storage service is connected.
+### Supabase Setup
+
+Run `supabase/schema.sql` in the Supabase SQL editor, then set these environment variables locally and in Vercel:
+
+```text
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+Use the service role key only on the server. It is intentionally never referenced by browser code.
+
+To import the seeded `data/meals.json` records into Supabase:
+
+```bash
+npm run import:supabase
+```
+
+### Tool Behavior Ideas
+
+The LangGraph workflow is currently deterministic. Useful tool-backed behaviors to add next:
+
+- `meal-history-tool`: compare a draft against recent meals before deciding whether it is new, familiar, or routine.
+- `habit-backfill-tool`: turn a count like "all days except 3" into exact dated pre-breakfast entries after a quick confirmation step.
+- `nutrition-lookup-tool`: enrich foods with rough protein/fiber/caffeine tags.
+- `weekly-summary-tool`: generate a public weekly digest from Supabase meals and comments.
+- `review-gate-tool`: route low-confidence or privacy-risk drafts to a review state before publishing.
 
 ## Color Preview
 
@@ -51,7 +76,7 @@ That workflow is implemented as a LangGraph `StateGraph` without requiring an AP
 
 ## Comments
 
-Friends can comment on any public meal. Comments are stored on the meal record in `data/meals.json`, are available through `POST /api/meals/:id/comments`, and appear as floating reaction bubbles on the public board.
+Friends can comment on any public meal. Comments are stored in Supabase when configured, or on the meal record in `data/meals.json` during local JSON fallback. They are available through `POST /api/meals/:id/comments` and appear as floating reaction bubbles on the public board.
 
 ## Cool Stats Included
 
