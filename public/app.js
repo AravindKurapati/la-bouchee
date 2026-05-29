@@ -33,7 +33,7 @@ const els = {
   latestDayTitle: $("#latestDayTitle"),
   latestMeals: $("#latestMeals"),
   recentMeals: $("#recentMeals"),
-  heatmap: $("#heatmap"),
+  routineMap: $("#routineMap"),
   topFoods: $("#topFoods"),
   sourceSplit: $("#sourceSplit")
 };
@@ -176,15 +176,34 @@ function renderLatest(stats) {
   els.latestMeals.innerHTML = mealTypes.map((type) => mealCard(byType.get(type), { compact: true })).join("");
 }
 
-function renderHeatmap(stats) {
-  els.heatmap.innerHTML = stats.heatmap
+function routineCellTitle(date, type, cell) {
+  const stateLabel = titleCase(cell.state);
+  const source = sourceLabel(cell.source);
+  const repeat = cell.repeatCount ? `${cell.repeatCount} appearance${cell.repeatCount === 1 ? "" : "s"}` : "not repeated";
+  const comments = cell.commentCount ? `${cell.commentCount} comment${cell.commentCount === 1 ? "" : "s"}` : "no comments";
+  return `${formatDate(date)} ${type}: ${stateLabel}. ${source}. ${repeat}. ${comments}. ${cell.label}`;
+}
+
+function renderRoutineMap(stats) {
+  els.routineMap.innerHTML = stats.routineMap
     .map((day) => {
       const label = day.weekday.slice(0, 1);
       return `
-        <div class="heat-day" title="${formatDate(day.date)}">
-          <span class="heat-label">${label}</span>
+        <div class="routine-day" title="${formatDate(day.date)}">
+          <span class="routine-label">${label}</span>
           ${mealTypes
-            .map((type) => `<span class="heat-cell heat-${type} ${day.cells[type]}" title="${formatDate(day.date)} ${type}: ${day.cells[type]}"></span>`)
+            .map((type) => {
+              const cell = day.cells[type];
+              const classes = [
+                "routine-cell",
+                `routine-${cell.state}`,
+                `source-${cell.source || "unknown"}`,
+                cell.commentCount ? "has-comments" : ""
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return `<span class="${classes}" title="${escapeHtml(routineCellTitle(day.date, type, cell))}" aria-label="${escapeHtml(routineCellTitle(day.date, type, cell))}" role="img"></span>`;
+            })
             .join("")}
         </div>
       `;
@@ -268,7 +287,7 @@ function render() {
   if (!state.stats) return;
   renderTopline(state.stats);
   renderLatest(state.stats);
-  renderHeatmap(state.stats);
+  renderRoutineMap(state.stats);
   renderBars(state.stats);
   renderSourceSplit(state.stats);
   renderFloatingComments(state.stats);

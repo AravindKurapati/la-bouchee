@@ -105,13 +105,13 @@ async function route(req, res) {
 
   if (req.method === "POST" && pathname === "/api/analyze") {
     const body = await readBody(req);
-    sendJson(res, 200, runMealAgentGraph(body));
+    sendJson(res, 200, await runMealAgentGraph(body));
     return;
   }
 
   if (req.method === "POST" && pathname === "/api/meals") {
     const body = await readBody(req);
-    const meal = body.foods && body.publicCaption ? body : runMealAgentGraph(body);
+    const meal = body.foods && body.publicCaption ? body : await runMealAgentGraph(body);
     const saved = await saveMeal(meal);
     sendJson(res, 201, saved);
     return;

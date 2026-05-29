@@ -76,16 +76,71 @@ function displayLabel(label) {
   return String(label || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function buildHeatmap(meals, endIso) {
+function routineStateFor(repeatCount) {
+  if (repeatCount >= 3) return "routine";
+  if (repeatCount === 2) return "familiar";
+  return "new";
+}
+
+function buildRoutineMap(meals, endIso) {
   const byDayMeal = new Map();
   for (const meal of meals) byDayMeal.set(`${meal.date}:${meal.mealType}`, meal);
+
+  const fingerprintCounts = new Map();
+  for (const meal of meals) {
+    if (meal.tags?.includes("skipped") || meal.source === "skipped") continue;
+    const fingerprint = mealFingerprint(meal);
+    fingerprintCounts.set(fingerprint, (fingerprintCounts.get(fingerprint) || 0) + 1);
+  }
+  const maxRepeat = Math.max(1, ...fingerprintCounts.values());
 
   return Array.from({ length: 35 }, (_, index) => {
     const date = addDays(endIso, index - 34);
     const cells = Object.fromEntries(
       MEAL_ORDER.map((mealType) => {
         const meal = byDayMeal.get(`${date}:${mealType}`);
-        return [mealType, !meal ? "empty" : meal.tags?.includes("skipped") ? "skipped" : "logged"];
+        if (!meal) {
+          return [
+            mealType,
+            {
+              state: "empty",
+              source: "unknown",
+              repeatCount: 0,
+              frequency: 0,
+              commentCount: 0,
+              label: "No public entry"
+            }
+          ];
+        }
+
+        const commentCount = Array.isArray(meal.comments) ? meal.comments.length : 0;
+        if (meal.tags?.includes("skipped") || meal.source === "skipped") {
+          return [
+            mealType,
+            {
+              state: "skipped",
+              source: "skipped",
+              repeatCount: 0,
+              frequency: 0,
+              commentCount,
+              label: meal.publicCaption || "Skipped"
+            }
+          ];
+        }
+
+        const fingerprint = mealFingerprint(meal);
+        const repeatCount = fingerprintCounts.get(fingerprint) || 1;
+        return [
+          mealType,
+          {
+            state: routineStateFor(repeatCount),
+            source: meal.source || "unknown",
+            repeatCount,
+            frequency: percent(repeatCount, maxRepeat),
+            commentCount,
+            label: meal.publicCaption || (meal.foods || []).join(", ") || "Logged meal"
+          }
+        ];
       })
     );
     return {
@@ -141,7 +196,7 @@ export function computeStats(mealsInput) {
   const todayIso = new Date().toISOString().slice(0, 10);
   const firstDate = visibleMeals[0]?.date || todayIso;
   const lastDate = visibleMeals.at(-1)?.date || todayIso;
-  const endIso = lastDate > todayIso ? lastDate : todayIso;
+  const endIso = visibleMeals.length ? lastDate : todayIso;
 
   const allFoods = visibleMeals.flatMap((meal) => meal.foods || []).map(normalize).filter(Boolean);
   const allTags = visibleMeals.flatMap((meal) => meal.tags || []).map(normalize).filter((tag) => tag && tag !== "unclear-source");
@@ -201,7 +256,7 @@ export function computeStats(mealsInput) {
     topFoods,
     topTags,
     topCuisines,
-    heatmap: buildHeatmap(visibleMeals, endIso),
+    routineMap: buildRoutineMap(visibleMeals, endIso),
     digest: buildDigest({ meals: visibleMeals, topFoods, topTags, currentStreak, loggedDays, takeoutRatio, entropy }),
     commentCount: recentComments.length,
     activeCommenters: new Set(recentComments.map((comment) => normalize(comment.name))).size,
