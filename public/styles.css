@@ -294,7 +294,7 @@ h3 {
 
 .meal-triptych {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
 }
@@ -316,6 +316,10 @@ h3 {
 
 .meal-card.meal-breakfast {
   border-left-color: var(--saffron);
+}
+
+.meal-card.meal-pre-breakfast {
+  border-left-color: var(--cyan);
 }
 
 .meal-card.meal-lunch {
@@ -727,15 +731,27 @@ h3 {
   vertical-align: middle;
 }
 
-.dot.logged {
-  background: var(--heat-lunch);
+.dot.new {
+  background: #b8ded4;
+}
+
+.dot.familiar {
+  background: #56b781;
+}
+
+.dot.routine {
+  background: #14643b;
+}
+
+.dot.comment {
+  background: var(--berry);
 }
 
 .dot.skipped {
   background: var(--tomato);
 }
 
-.heatmap {
+.routine-map {
   display: grid;
   grid-template-columns: repeat(35, minmax(14px, 1fr));
   gap: 6px;
@@ -745,45 +761,72 @@ h3 {
   padding-bottom: 6px;
 }
 
-.heat-day {
+.routine-day {
   display: grid;
-  grid-template-rows: 18px repeat(3, 34px);
+  grid-template-rows: 18px repeat(4, 34px);
   gap: 5px;
   min-width: 18px;
 }
 
-.heat-label {
+.routine-label {
   color: var(--muted);
   font-size: 0.62rem;
   text-align: center;
 }
 
-.heat-cell {
+.routine-cell {
+  position: relative;
   width: 100%;
   min-width: 14px;
   border-radius: 4px;
   background: #e6ede7;
-  border: 1px solid rgba(23, 33, 27, 0.05);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  border-bottom-width: 3px;
 }
 
-.heat-cell.logged {
-  background: var(--heat-lunch);
+.routine-cell.routine-new {
+  background: #b8ded4;
 }
 
-.heat-cell.logged.heat-breakfast {
-  background: var(--heat-breakfast);
+.routine-cell.routine-familiar {
+  background: #56b781;
 }
 
-.heat-cell.logged.heat-lunch {
-  background: var(--heat-lunch);
+.routine-cell.routine-routine {
+  background: #14643b;
 }
 
-.heat-cell.logged.heat-dinner {
-  background: var(--heat-dinner);
+.routine-cell.routine-empty {
+  background: #e6ede7;
 }
 
-.heat-cell.skipped {
+.routine-cell.routine-skipped {
   background: var(--tomato);
+}
+
+.routine-cell.source-home {
+  border-bottom-color: var(--saffron);
+}
+
+.routine-cell.source-restaurant,
+.routine-cell.source-takeout {
+  border-bottom-color: var(--restaurant);
+}
+
+.routine-cell.source-unknown {
+  border-bottom-color: #b9c7be;
+}
+
+.routine-cell.has-comments::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--panel);
+  border-radius: 50%;
+  background: var(--berry);
 }
 
 .bar-list {
@@ -920,7 +963,7 @@ textarea:focus {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   padding: 5px;
   border: 1px solid var(--line);

@@ -1,4 +1,6 @@
-const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
+import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+
+const MEAL_TYPES = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 
 const MULTIWORD_FOODS = [
   "iced coffee",
@@ -86,12 +88,13 @@ function extractFoods(rawText) {
   let text = protectPhrases(rawText.toLowerCase());
   text = text
     .replace(/\b(i|we)\s+(had|ate|made|cooked|got|grabbed|ordered|did)\b/g, " ")
-    .replace(/\b(for|as)\s+(breakfast|lunch|dinner)\b/g, " ")
+    .replace(/\b(for|as)\s+(pre[-\s]?breakfast|breakfast|lunch|dinner)\b/g, " ")
     .replace(/\bwith a side of\b/g, ",")
     .replace(/\bwith\b/g, ",")
     .replace(/\bplus\b/g, ",")
     .replace(/\band\b/g, ",")
     .replace(/[.;/|+&]/g, ",")
+    .replace(/\bat home\b/g, " ")
     .replace(/\bfrom\b.+$/g, " ");
 
   const stopWords = new Set(["a", "an", "the", "some", "my", "one", "two", "today", "tonight", "morning"]);
@@ -146,6 +149,7 @@ function publicList(items) {
 }
 
 function titleMealType(value) {
+  if (value === "pre-breakfast") return "Pre-breakfast";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
@@ -234,68 +238,157 @@ function confidenceFor({ foods, tags, privacyIssues }) {
   return Number(Math.min(score, 0.98).toFixed(2));
 }
 
-export function runMealAgentGraph(input) {
-  const date = input.date || new Date().toISOString().slice(0, 10);
-  const mealType = MEAL_TYPES.includes(input.mealType) ? input.mealType : "breakfast";
+const MealAgentState = Annotation.Root({
+  input: Annotation({ default: () => ({}) }),
+  date: Annotation({ default: () => new Date().toISOString().slice(0, 10) }),
+  mealType: Annotation({ default: () => "breakfast" }),
+  rawText: Annotation({ default: () => "" }),
+  redactedText: Annotation({ default: () => "" }),
+  foods: Annotation({ default: () => [] }),
+  tags: Annotation({ default: () => [] }),
+  cuisine: Annotation({ default: () => "Mixed" }),
+  source: Annotation({ default: () => "unknown" }),
+  photoUrl: Annotation({ default: () => "" }),
+  confidence: Annotation({ default: () => 0 }),
+  privacyIssues: Annotation({ default: () => [] }),
+  publishable: Annotation({ default: () => true }),
+  publicCaption: Annotation({ default: () => "" }),
+  agentTrace: Annotation({
+    reducer: (current, update) => current.concat(update),
+    default: () => []
+  })
+});
+
+async function normalizeInputNode(state) {
+  const input = state.input || {};
   const rawText = cleanSpaces(input.rawText);
-  const photoUrl = cleanSpaces(input.photoUrl);
-  const trace = [];
-
-  if (!rawText) {
-    throw new Error("rawText is required");
-  }
-
-  const privacy = runPrivacyAgent(rawText);
-  trace.push({
-    name: "privacy-agent",
-    status: privacy.publishable ? "clear" : "review",
-    summary: privacy.issues.length ? `${privacy.issues.length} privacy signal(s) found` : "No sensitive detail detected"
-  });
-
-  const foods = extractFoods(privacy.redactedText);
-  trace.push({
-    name: "parser-agent",
-    status: foods.length || isSkipped(rawText) ? "clear" : "review",
-    summary: foods.length ? `Extracted ${foods.length} food item(s)` : "No foods extracted"
-  });
-
-  const tags = inferTags(privacy.redactedText, foods);
-  const cuisine = inferCuisine(privacy.redactedText, foods);
-  const source = inferSource(privacy.redactedText, tags);
-  trace.push({
-    name: "tagger-agent",
-    status: "clear",
-    summary: `${tags.slice(0, 4).join(", ")}${tags.length > 4 ? "..." : ""}`
-  });
-
-  const publicCaption = makeCaption({ mealType, foods, tags, cuisine, source });
-  trace.push({
-    name: "caption-agent",
-    status: "clear",
-    summary: publicCaption
-  });
-
-  const confidence = confidenceFor({ foods, tags, privacyIssues: privacy.issues });
-  trace.push({
-    name: "memory-agent",
-    status: "queued",
-    summary: "Ready to update long-term public stats after publish"
-  });
+  if (!rawText) throw new Error("rawText is required");
 
   return {
-    date,
-    mealType,
+    date: input.date || new Date().toISOString().slice(0, 10),
+    mealType: MEAL_TYPES.includes(input.mealType) ? input.mealType : "breakfast",
     rawText,
+    photoUrl: cleanSpaces(input.photoUrl)
+  };
+}
+
+async function privacyNode(state) {
+  const privacy = runPrivacyAgent(state.rawText);
+  return {
     redactedText: privacy.redactedText,
+    privacyIssues: privacy.issues,
+    publishable: privacy.publishable,
+    agentTrace: [
+      {
+        name: "privacy-agent",
+        status: privacy.publishable ? "clear" : "review",
+        summary: privacy.issues.length ? `${privacy.issues.length} privacy signal(s) found` : "No sensitive detail detected"
+      }
+    ]
+  };
+}
+
+async function parserNode(state) {
+  const foods = extractFoods(state.redactedText);
+  return {
     foods,
+    agentTrace: [
+      {
+        name: "parser-agent",
+        status: foods.length || isSkipped(state.rawText) ? "clear" : "review",
+        summary: foods.length ? `Extracted ${foods.length} food item(s)` : "No foods extracted"
+      }
+    ]
+  };
+}
+
+async function taggerNode(state) {
+  const tags = inferTags(state.redactedText, state.foods);
+  const cuisine = inferCuisine(state.redactedText, state.foods);
+  const source = inferSource(state.redactedText, tags);
+  return {
     tags,
     cuisine,
     source,
-    photoUrl,
-    confidence,
-    privacyIssues: privacy.issues,
-    publishable: privacy.publishable,
+    agentTrace: [
+      {
+        name: "tagger-agent",
+        status: "clear",
+        summary: `${tags.slice(0, 4).join(", ")}${tags.length > 4 ? "..." : ""}`
+      }
+    ]
+  };
+}
+
+async function captionNode(state) {
+  const publicCaption = makeCaption({
+    mealType: state.mealType,
+    foods: state.foods,
+    tags: state.tags,
+    cuisine: state.cuisine,
+    source: state.source
+  });
+  return {
     publicCaption,
-    agentTrace: trace
+    agentTrace: [
+      {
+        name: "caption-agent",
+        status: "clear",
+        summary: publicCaption
+      }
+    ]
+  };
+}
+
+async function memoryNode(state) {
+  return {
+    confidence: confidenceFor({
+      foods: state.foods,
+      tags: state.tags,
+      privacyIssues: state.privacyIssues
+    }),
+    agentTrace: [
+      {
+        name: "memory-agent",
+        status: "queued",
+        summary: "Ready to update long-term public stats after publish"
+      }
+    ]
+  };
+}
+
+const mealAgentGraph = new StateGraph(MealAgentState)
+  .addNode("normalize-input", normalizeInputNode)
+  .addNode("privacy-agent", privacyNode)
+  .addNode("parser-agent", parserNode)
+  .addNode("tagger-agent", taggerNode)
+  .addNode("caption-agent", captionNode)
+  .addNode("memory-agent", memoryNode)
+  .addEdge(START, "normalize-input")
+  .addEdge("normalize-input", "privacy-agent")
+  .addEdge("privacy-agent", "parser-agent")
+  .addEdge("parser-agent", "tagger-agent")
+  .addEdge("tagger-agent", "caption-agent")
+  .addEdge("caption-agent", "memory-agent")
+  .addEdge("memory-agent", END)
+  .compile();
+
+export async function runMealAgentGraph(input) {
+  const state = await mealAgentGraph.invoke({ input });
+  return {
+    date: state.date,
+    mealType: state.mealType,
+    rawText: state.rawText,
+    redactedText: state.redactedText,
+    foods: state.foods,
+    tags: state.tags,
+    cuisine: state.cuisine,
+    source: state.source,
+    photoUrl: state.photoUrl,
+    confidence: state.confidence,
+    privacyIssues: state.privacyIssues,
+    publishable: state.publishable,
+    publicCaption: state.publicCaption,
+    agentTrace: state.agentTrace
   };
 }

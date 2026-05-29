@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       res.status(405).json({ error: "Method not allowed" });
       return;
     }
-    res.status(200).json(runMealAgentGraph(await readBody(req)));
+    res.status(200).json(await runMealAgentGraph(await readBody(req)));
   } catch (error) {
     sendError(res, error);
   }

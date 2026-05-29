@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     if (req.method === "POST") {
       const body = await readBody(req);
-      const meal = body.foods && body.publicCaption ? body : runMealAgentGraph(body);
+      const meal = body.foods && body.publicCaption ? body : await runMealAgentGraph(body);
       res.status(201).json(await saveMeal(meal));
       return;
     }
