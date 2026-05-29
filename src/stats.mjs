@@ -114,40 +114,6 @@ function buildDigest({ meals, topFoods, topTags, currentStreak, loggedDays, take
   return anchors.join(". ") + ".";
 }
 
-function buildConstellation(topTags) {
-  const nodes = topTags.slice(0, 10);
-  return nodes.map((item, index) => {
-    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, nodes.length);
-    const radius = 33 + (index % 2) * 8;
-    const rawX = 50 + Math.cos(angle) * radius;
-    const rawY = 50 + Math.sin(angle) * radius;
-    return {
-      label: item.label,
-      count: item.count,
-      x: Math.round(Math.max(20, Math.min(80, rawX))),
-      y: Math.round(Math.max(18, Math.min(76, rawY))),
-      size: Math.min(12, 6 + item.count * 0.9)
-    };
-  });
-}
-
-function buildRadar({ meals, loggedDays, breakfastDays, sourceCounts, topTags, topCuisines, allFoods }) {
-  const total = meals.length || 1;
-  const tagSet = new Set(topTags.map((item) => item.label));
-  const sourceMap = new Map(sourceCounts.map((item) => [item.label, item.count]));
-  const home = sourceMap.get("home") || 0;
-  const restaurant = (sourceMap.get("restaurant") || 0) + (sourceMap.get("takeout") || 0);
-
-  return [
-    { label: "home base", value: percent(home, total) },
-    { label: "morning anchor", value: percent(breakfastDays, loggedDays) },
-    { label: "vegetable signal", value: tagSet.has("vegetable") ? Math.min(100, (topTags.find((item) => item.label === "vegetable")?.count || 0) * 18) : 0 },
-    { label: "cuisine range", value: Math.min(100, topCuisines.length * 18) },
-    { label: "outside world", value: percent(restaurant, total) },
-    { label: "ingredient range", value: Math.min(100, new Set(allFoods).size * 7) }
-  ];
-}
-
 function flattenComments(meals) {
   return meals
     .flatMap((meal) =>
@@ -236,8 +202,6 @@ export function computeStats(mealsInput) {
     topTags,
     topCuisines,
     heatmap: buildHeatmap(visibleMeals, endIso),
-    constellation: buildConstellation(topTags),
-    radar: buildRadar({ meals: visibleMeals, loggedDays, breakfastDays, sourceCounts, topTags, topCuisines, allFoods }),
     digest: buildDigest({ meals: visibleMeals, topFoods, topTags, currentStreak, loggedDays, takeoutRatio, entropy }),
     commentCount: recentComments.length,
     activeCommenters: new Set(recentComments.map((comment) => normalize(comment.name))).size,

@@ -34,8 +34,6 @@ const els = {
   latestMeals: $("#latestMeals"),
   recentMeals: $("#recentMeals"),
   heatmap: $("#heatmap"),
-  constellation: $("#constellation"),
-  radar: $("#radar"),
   topFoods: $("#topFoods"),
   sourceSplit: $("#sourceSplit")
 };
@@ -111,6 +109,14 @@ function chipList(tags = [], limit = 4) {
     .join("");
 }
 
+function sourceLabel(source) {
+  if (source === "restaurant") return "out";
+  if (source === "takeout") return "takeout";
+  if (source === "home") return "home";
+  if (source === "skipped") return "skipped";
+  return "source?";
+}
+
 function mealCard(meal, { compact = false } = {}) {
   if (!meal) {
     return `
@@ -124,9 +130,12 @@ function mealCard(meal, { compact = false } = {}) {
   const foods = meal.foods?.length ? meal.foods.join(", ") : "Skipped";
   const commentCount = Array.isArray(meal.comments) ? meal.comments.length : 0;
   return `
-    <article class="meal-card">
+    <article class="meal-card meal-${escapeHtml(meal.mealType)} source-${escapeHtml(meal.source || "unknown")}">
       <div class="meal-meta">
-        <span>${escapeHtml(titleCase(meal.mealType))}</span>
+        <span class="meal-meta-left">
+          <span>${escapeHtml(titleCase(meal.mealType))}</span>
+          <span class="source-badge source-${escapeHtml(meal.source || "unknown")}">${escapeHtml(sourceLabel(meal.source))}</span>
+        </span>
         <span>${formatDate(meal.date)}</span>
       </div>
       <p>${escapeHtml(meal.publicCaption || foods)}</p>
@@ -175,80 +184,12 @@ function renderHeatmap(stats) {
         <div class="heat-day" title="${formatDate(day.date)}">
           <span class="heat-label">${label}</span>
           ${mealTypes
-            .map((type) => `<span class="heat-cell ${day.cells[type]}" title="${formatDate(day.date)} ${type}: ${day.cells[type]}"></span>`)
+            .map((type) => `<span class="heat-cell heat-${type} ${day.cells[type]}" title="${formatDate(day.date)} ${type}: ${day.cells[type]}"></span>`)
             .join("")}
         </div>
       `;
     })
     .join("");
-}
-
-function renderConstellation(stats) {
-  const nodes = stats.constellation;
-  if (!nodes.length) {
-    els.constellation.innerHTML = `<div class="draft-empty">No tags yet.</div>`;
-    return;
-  }
-  const lines = nodes
-    .map((node) => `<line x1="50" y1="50" x2="${node.x}" y2="${node.y}" stroke="rgba(23,33,27,0.16)" stroke-width="0.7" />`)
-    .join("");
-  const circles = nodes
-    .map(
-      (node, index) => `
-        <g>
-          <circle cx="${node.x}" cy="${node.y}" r="${node.size}" fill="${index % 3 === 0 ? "#e75d45" : index % 3 === 1 ? "#168ca1" : "#2aa866"}" opacity="0.9" />
-          <text x="${node.x}" y="${node.y + node.size + 8}" text-anchor="middle" font-size="4.5" fill="#17211b">${titleCase(node.label)}</text>
-        </g>
-      `
-    )
-    .join("");
-
-  els.constellation.innerHTML = `
-    <svg viewBox="0 0 100 100" role="img" aria-label="Flavor tag constellation">
-      <circle cx="50" cy="50" r="4" fill="#17211b" />
-      ${lines}
-      ${circles}
-    </svg>
-  `;
-}
-
-function renderRadar(stats) {
-  const items = stats.radar;
-  const center = 110;
-  const radius = 76;
-  const points = items.map((item, index) => {
-    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / items.length;
-    const scaled = radius * (item.value / 100);
-    return {
-      ...item,
-      x: center + Math.cos(angle) * scaled,
-      y: center + Math.sin(angle) * scaled,
-      ax: center + Math.cos(angle) * radius,
-      ay: center + Math.sin(angle) * radius,
-      lx: center + Math.cos(angle) * (radius + 23),
-      ly: center + Math.sin(angle) * (radius + 23)
-    };
-  });
-  const polygon = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const axis = points
-    .map(
-      (point) => `
-        <line x1="${center}" y1="${center}" x2="${point.ax}" y2="${point.ay}" stroke="#d9e2da" />
-        <text x="${point.lx}" y="${point.ly}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#66736a">${point.label}</text>
-      `
-    )
-    .join("");
-
-  els.radar.innerHTML = `
-    <svg viewBox="0 0 220 220" role="img" aria-label="Plate radar chart">
-      <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#d9e2da" />
-      <circle cx="${center}" cy="${center}" r="${radius * 0.66}" fill="none" stroke="#e8eee9" />
-      <circle cx="${center}" cy="${center}" r="${radius * 0.33}" fill="none" stroke="#e8eee9" />
-      ${axis}
-      <polygon points="${polygon}" fill="rgba(231,93,69,0.26)" stroke="#e75d45" stroke-width="3" />
-      ${points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="4" fill="#17211b" />`).join("")}
-    </svg>
-  `;
 }
 
 function renderBars(stats) {
@@ -328,8 +269,6 @@ function render() {
   renderTopline(state.stats);
   renderLatest(state.stats);
   renderHeatmap(state.stats);
-  renderConstellation(state.stats);
-  renderRadar(state.stats);
   renderBars(state.stats);
   renderSourceSplit(state.stats);
   renderFloatingComments(state.stats);

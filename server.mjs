@@ -138,7 +138,7 @@ async function route(req, res) {
 const server = http.createServer((req, res) => {
   route(req, res).catch((error) => {
     console.error(error);
-    sendError(res, 500, error.message || "Unexpected server error");
+    sendError(res, error.statusCode || 500, error.message || "Unexpected server error");
   });
 });
 

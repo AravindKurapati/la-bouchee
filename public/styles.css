@@ -11,6 +11,13 @@
   --cyan: #168ca1;
   --gold: #c79220;
   --berry: #bb3f6d;
+  --saffron: #d99a18;
+  --lunch-green: #2f9e59;
+  --dinner-red: #d84d36;
+  --restaurant: #6f58d9;
+  --heat-breakfast: #9bcf68;
+  --heat-lunch: #2da44e;
+  --heat-dinner: #1f7a45;
   --ink-soft: #27362d;
   --shadow: 0 14px 38px rgba(33, 48, 38, 0.08);
 }
@@ -232,12 +239,25 @@ h3 {
   min-height: 172px;
   padding: 18px;
   border: 1px solid var(--line);
+  border-top-width: 4px;
   border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.score-tile:nth-child(1) {
+  border-top-color: var(--lunch-green);
+}
+
+.score-tile:nth-child(2) {
+  border-top-color: var(--saffron);
+}
+
+.score-tile:nth-child(3) {
+  border-top-color: var(--cyan);
 }
 
 .score-tile span {
@@ -276,9 +296,12 @@ h3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .meal-card {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 132px;
   display: grid;
@@ -286,8 +309,29 @@ h3 {
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+}
+
+.meal-card.meal-breakfast {
+  border-left-color: var(--saffron);
+}
+
+.meal-card.meal-lunch {
+  border-left-color: var(--lunch-green);
+}
+
+.meal-card.meal-dinner {
+  border-left-color: var(--dinner-red);
+}
+
+.meal-card.source-restaurant {
+  background: linear-gradient(90deg, rgba(111, 88, 217, 0.07), rgba(255, 255, 255, 0.92) 34%);
+}
+
+.meal-card.source-home {
+  background: linear-gradient(90deg, rgba(217, 154, 24, 0.07), rgba(255, 255, 255, 0.92) 34%);
 }
 
 .meal-card.empty {
@@ -300,14 +344,52 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 820;
   text-transform: uppercase;
 }
 
+.meal-meta > span {
+  min-width: 0;
+}
+
+.meal-meta-left {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #eef4f1;
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 850;
+}
+
+.source-badge.source-home {
+  background: #fff3cf;
+  color: #7a560d;
+}
+
+.source-badge.source-restaurant,
+.source-badge.source-takeout {
+  background: #eeeafb;
+  color: #4d3da8;
+}
+
 .meal-card p {
+  max-width: 100%;
   margin: 0;
+  word-break: break-word;
   line-height: 1.35;
 }
 
@@ -324,7 +406,7 @@ h3 {
   padding: 0 9px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--panel-2);
+  background: #f4f8f5;
   color: var(--ink-soft);
   cursor: pointer;
   font-size: 0.72rem;
@@ -408,8 +490,8 @@ h3 {
   border: 1px dashed rgba(23, 33, 27, 0.12);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 24% 24%, rgba(42, 168, 102, 0.14), transparent 28%),
-    radial-gradient(circle at 78% 38%, rgba(231, 93, 69, 0.14), transparent 26%),
+    radial-gradient(circle at 24% 24%, rgba(45, 164, 78, 0.12), transparent 28%),
+    radial-gradient(circle at 78% 38%, rgba(217, 154, 24, 0.12), transparent 26%),
     rgba(255, 255, 255, 0.58);
 }
 
@@ -432,6 +514,7 @@ h3 {
   gap: 5px;
   padding: 10px 12px;
   border: 1px solid rgba(23, 33, 27, 0.1);
+  border-top: 3px solid rgba(22, 140, 161, 0.55);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
@@ -467,12 +550,27 @@ h3 {
   color: var(--tomato);
 }
 
+.floating-comment.tone-1 {
+  border-top-color: rgba(216, 77, 54, 0.62);
+  box-shadow: 0 12px 28px rgba(216, 77, 54, 0.13);
+}
+
 .floating-comment.tone-2 strong {
   color: var(--mint);
 }
 
+.floating-comment.tone-2 {
+  border-top-color: rgba(45, 164, 78, 0.62);
+  box-shadow: 0 12px 28px rgba(45, 164, 78, 0.13);
+}
+
 .floating-comment.tone-3 strong {
   color: var(--gold);
+}
+
+.floating-comment.tone-3 {
+  border-top-color: rgba(217, 154, 24, 0.66);
+  box-shadow: 0 12px 28px rgba(217, 154, 24, 0.14);
 }
 
 @keyframes float-comment {
@@ -494,9 +592,26 @@ h3 {
   min-height: 138px;
   padding: 16px;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
+}
+
+.metric-card:nth-child(1) {
+  border-left-color: var(--saffron);
+}
+
+.metric-card:nth-child(2) {
+  border-left-color: var(--lunch-green);
+}
+
+.metric-card:nth-child(3) {
+  border-left-color: var(--dinner-red);
+}
+
+.metric-card:nth-child(4) {
+  border-left-color: var(--restaurant);
 }
 
 .metric-card p {
@@ -513,7 +628,7 @@ h3 {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: conic-gradient(var(--mint) calc(var(--value) * 1%), #e3ebe4 0);
+  background: conic-gradient(var(--saffron) calc(var(--value) * 1%), #e3ebe4 0);
   position: relative;
 }
 
@@ -533,11 +648,11 @@ h3 {
 }
 
 .ring.accent {
-  background: conic-gradient(var(--cyan) calc(var(--value) * 1%), #e3ebe4 0);
+  background: conic-gradient(var(--lunch-green) calc(var(--value) * 1%), #e3ebe4 0);
 }
 
 .ring.warm {
-  background: conic-gradient(var(--gold) calc(var(--value) * 1%), #e3ebe4 0);
+  background: conic-gradient(var(--dinner-red) calc(var(--value) * 1%), #e3ebe4 0);
 }
 
 .streak-badge {
@@ -613,7 +728,7 @@ h3 {
 }
 
 .dot.logged {
-  background: var(--mint);
+  background: var(--heat-lunch);
 }
 
 .dot.skipped {
@@ -652,24 +767,23 @@ h3 {
 }
 
 .heat-cell.logged {
-  background: var(--mint);
+  background: var(--heat-lunch);
+}
+
+.heat-cell.logged.heat-breakfast {
+  background: var(--heat-breakfast);
+}
+
+.heat-cell.logged.heat-lunch {
+  background: var(--heat-lunch);
+}
+
+.heat-cell.logged.heat-dinner {
+  background: var(--heat-dinner);
 }
 
 .heat-cell.skipped {
   background: var(--tomato);
-}
-
-.constellation,
-.radar {
-  width: 100%;
-  min-height: 238px;
-}
-
-.constellation svg,
-.radar svg {
-  width: 100%;
-  height: 250px;
-  display: block;
 }
 
 .bar-list {
@@ -742,6 +856,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .meal-list .meal-card {
@@ -1139,6 +1254,16 @@ textarea:focus {
   .meal-actions {
     align-items: start;
     flex-direction: column;
+  }
+
+  .meal-card p {
+    max-width: min(100%, calc(100vw - 150px));
+  }
+
+  .meal-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .panel.wide {
