@@ -20,6 +20,11 @@ export async function readMeals() {
 }
 
 export async function writeMeals(meals) {
+  if (process.env.VERCEL && process.env.ALLOW_FILE_STORE_WRITES !== "1") {
+    const error = new Error("Persistent writes are not configured on this deployment yet.");
+    error.statusCode = 501;
+    throw error;
+  }
   await mkdir(dataDir, { recursive: true });
   await writeFile(dataFile, `${JSON.stringify(meals, null, 2)}\n`);
 }

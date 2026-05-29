@@ -20,6 +20,8 @@ No install step is required for the current MVP. It uses Node's built-in HTTP se
 
 Open the app and go to the `Log Meal` tab. Pick the date and meal type, write the raw meal text, run the agents, then publish the generated public caption. The meal is appended to `data/meals.json`.
 
+On Vercel, the seeded public log is deployable as a read-only preview. Persistent hosted writes need a database or durable storage before public logging/comments can be shared across visitors.
+
 ## Color Preview
 
 Open `/color-preview.html` while the server is running to compare three possible color directions. It does not change the main dashboard.
@@ -43,8 +45,9 @@ Friends can comment on any public meal. Comments are stored on the meal record i
 ## Cool Stats Included
 
 - 35-day breakfast/lunch/dinner heatmap
-- flavor constellation from top tags
-- plate radar for public eating identity
+- floating friend reactions
+- top foods bar chart
+- home vs outside source split
 - entropy score
 - repeat gravity
 - breakfast anchor
