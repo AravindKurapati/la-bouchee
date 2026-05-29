@@ -1,4 +1,4 @@
-const MEAL_ORDER = ["breakfast", "lunch", "dinner"];
+const MEAL_ORDER = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -231,7 +231,7 @@ export function computeStats(mealsInput) {
 
   const currentStreak = currentLoggingStreak(daySet, lastDate);
   const coverageDays = Math.max(1, daysBetween(firstDate, lastDate) + 1);
-  const publicCompleteness = percent(totalMeals, coverageDays * 3);
+  const publicCompleteness = percent(totalMeals, coverageDays * MEAL_ORDER.length);
   const latestMeals = [...visibleMeals].sort((a, b) => `${b.date}:${MEAL_ORDER.indexOf(b.mealType)}`.localeCompare(`${a.date}:${MEAL_ORDER.indexOf(a.mealType)}`)).slice(0, 18);
   const recentComments = flattenComments(visibleMeals);
   const topCommenters = countBy(recentComments.map((comment) => normalize(comment.name))).slice(0, 6);

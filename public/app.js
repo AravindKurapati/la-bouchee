@@ -1,10 +1,10 @@
-const mealTypes = ["breakfast", "lunch", "dinner"];
+const mealTypes = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 let state = {
   meals: [],
   stats: null,
   draft: null,
   commentMeal: null,
-  mealType: "breakfast",
+  mealType: "pre-breakfast",
   view: "public"
 };
 

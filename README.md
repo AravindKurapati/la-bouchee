@@ -23,6 +23,16 @@ Open the app and go to the `Log Meal` tab. Pick the date and meal type, write th
 
 On Vercel, the seeded public log is deployable as a read-only preview. Persistent hosted writes need a database or durable storage before public logging/comments can be shared across visitors.
 
+## Backend
+
+The backend is split between `server.mjs` for local development and Vercel serverless handlers in `api/` for production. Both use the same shared modules in `src/`:
+
+- `src/store.mjs` reads and writes meal records.
+- `src/stats.mjs` computes the public dashboard metrics.
+- `src/agentGraph.mjs` runs the LangGraph intake workflow.
+
+The current hosted backend can read seeded data and run analysis, but durable public writes are intentionally blocked on Vercel until a database or storage service is connected.
+
 ## Color Preview
 
 Open `/color-preview.html` while the server is running to compare three possible color directions. It does not change the main dashboard.
@@ -45,7 +55,7 @@ Friends can comment on any public meal. Comments are stored on the meal record i
 
 ## Cool Stats Included
 
-- 35-day breakfast/lunch/dinner routine map
+- 35-day pre-breakfast/breakfast/lunch/dinner routine map
 - floating friend reactions
 - top foods bar chart
 - home vs outside source split

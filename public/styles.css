@@ -294,7 +294,7 @@ h3 {
 
 .meal-triptych {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
 }
@@ -316,6 +316,10 @@ h3 {
 
 .meal-card.meal-breakfast {
   border-left-color: var(--saffron);
+}
+
+.meal-card.meal-pre-breakfast {
+  border-left-color: var(--cyan);
 }
 
 .meal-card.meal-lunch {
@@ -759,7 +763,7 @@ h3 {
 
 .routine-day {
   display: grid;
-  grid-template-rows: 18px repeat(3, 34px);
+  grid-template-rows: 18px repeat(4, 34px);
   gap: 5px;
   min-width: 18px;
 }
@@ -959,7 +963,7 @@ textarea:focus {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   padding: 5px;
   border: 1px solid var(--line);

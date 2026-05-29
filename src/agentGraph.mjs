@@ -1,6 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 
-const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
+const MEAL_TYPES = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 
 const MULTIWORD_FOODS = [
   "iced coffee",
@@ -88,7 +88,7 @@ function extractFoods(rawText) {
   let text = protectPhrases(rawText.toLowerCase());
   text = text
     .replace(/\b(i|we)\s+(had|ate|made|cooked|got|grabbed|ordered|did)\b/g, " ")
-    .replace(/\b(for|as)\s+(breakfast|lunch|dinner)\b/g, " ")
+    .replace(/\b(for|as)\s+(pre[-\s]?breakfast|breakfast|lunch|dinner)\b/g, " ")
     .replace(/\bwith a side of\b/g, ",")
     .replace(/\bwith\b/g, ",")
     .replace(/\bplus\b/g, ",")
@@ -149,6 +149,7 @@ function publicList(items) {
 }
 
 function titleMealType(value) {
+  if (value === "pre-breakfast") return "Pre-breakfast";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
