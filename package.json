@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
+    "import:supabase": "node scripts/import-supabase.mjs",
     "start": "node server.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@langchain/langgraph": "^1.3.2"
+    "@langchain/langgraph": "^1.3.2",
+    "@supabase/supabase-js": "^2.106.2"
   },
   "overrides": {
     "@langchain/langgraph": {
