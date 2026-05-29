@@ -111,6 +111,14 @@ function chipList(tags = [], limit = 4) {
     .join("");
 }
 
+function sourceLabel(source) {
+  if (source === "restaurant") return "out";
+  if (source === "takeout") return "takeout";
+  if (source === "home") return "home";
+  if (source === "skipped") return "skipped";
+  return "source?";
+}
+
 function mealCard(meal, { compact = false } = {}) {
   if (!meal) {
     return `
@@ -124,9 +132,12 @@ function mealCard(meal, { compact = false } = {}) {
   const foods = meal.foods?.length ? meal.foods.join(", ") : "Skipped";
   const commentCount = Array.isArray(meal.comments) ? meal.comments.length : 0;
   return `
-    <article class="meal-card">
+    <article class="meal-card meal-${escapeHtml(meal.mealType)} source-${escapeHtml(meal.source || "unknown")}">
       <div class="meal-meta">
-        <span>${escapeHtml(titleCase(meal.mealType))}</span>
+        <span class="meal-meta-left">
+          <span>${escapeHtml(titleCase(meal.mealType))}</span>
+          <span class="source-badge source-${escapeHtml(meal.source || "unknown")}">${escapeHtml(sourceLabel(meal.source))}</span>
+        </span>
         <span>${formatDate(meal.date)}</span>
       </div>
       <p>${escapeHtml(meal.publicCaption || foods)}</p>
@@ -175,7 +186,7 @@ function renderHeatmap(stats) {
         <div class="heat-day" title="${formatDate(day.date)}">
           <span class="heat-label">${label}</span>
           ${mealTypes
-            .map((type) => `<span class="heat-cell ${day.cells[type]}" title="${formatDate(day.date)} ${type}: ${day.cells[type]}"></span>`)
+            .map((type) => `<span class="heat-cell heat-${type} ${day.cells[type]}" title="${formatDate(day.date)} ${type}: ${day.cells[type]}"></span>`)
             .join("")}
         </div>
       `;
