@@ -1,11 +1,22 @@
 const mealTypes = ["pre-breakfast", "breakfast", "lunch", "dinner"];
+const themeStorageKey = "la-bouchee-theme";
+const themeLabels = {
+  ledger: "Ledger",
+  console: "Console"
+};
+const themeMetaColors = {
+  ledger: "#f7f1e3",
+  console: "#07140f"
+};
+
 let state = {
   meals: [],
   stats: null,
   draft: null,
   commentMeal: null,
   mealType: "pre-breakfast",
-  view: "public"
+  view: "public",
+  theme: "ledger"
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -35,8 +46,78 @@ const els = {
   recentMeals: $("#recentMeals"),
   routineMap: $("#routineMap"),
   topFoods: $("#topFoods"),
-  sourceSplit: $("#sourceSplit")
+  sourceSplit: $("#sourceSplit"),
+  themeToggle: $("#themeToggle"),
+  themeColorMeta: document.querySelector('meta[name="theme-color"]')
 };
+
+function isTheme(value) {
+  return value === "ledger" || value === "console";
+}
+
+function readStoredTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey);
+  } catch {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // Storage can be unavailable in private or restricted browser contexts.
+  }
+}
+
+function readRequestedTheme() {
+  try {
+    return new URLSearchParams(window.location.search).get("theme");
+  } catch {
+    return null;
+  }
+}
+
+function initialTheme() {
+  const requested = readRequestedTheme();
+  if (isTheme(requested)) return requested;
+  const stored = readStoredTheme();
+  return isTheme(stored) ? stored : "ledger";
+}
+
+function applyTheme(theme) {
+  const nextTheme = isTheme(theme) ? theme : "ledger";
+  const targetTheme = nextTheme === "ledger" ? "console" : "ledger";
+  state.theme = nextTheme;
+  document.documentElement.dataset.theme = nextTheme;
+  storeTheme(nextTheme);
+
+  if (els.themeColorMeta) {
+    els.themeColorMeta.setAttribute("content", themeMetaColors[nextTheme]);
+  }
+
+  if (!els.themeToggle) return;
+  els.themeToggle.setAttribute("aria-label", `Switch to ${themeLabels[targetTheme]} theme`);
+  els.themeToggle.setAttribute("title", `Switch to ${themeLabels[targetTheme]} theme`);
+  els.themeToggle.setAttribute("aria-pressed", String(nextTheme === "console"));
+  els.themeToggle.querySelectorAll("[data-theme-label]").forEach((label) => {
+    label.classList.toggle("is-active", label.dataset.themeLabel === nextTheme);
+  });
+}
+
+function toggleTheme() {
+  applyTheme(state.theme === "console" ? "ledger" : "console");
+}
+
+function initialView() {
+  try {
+    const requested = new URLSearchParams(window.location.search).get("view");
+    return requested === "admin" ? "admin" : "public";
+  } catch {
+    return "public";
+  }
+}
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -234,7 +315,7 @@ function renderSourceSplit(stats) {
       (item, index) => `
         <div class="source-item">
           <header><span>${titleCase(item.label)}</span><span>${item.count}</span></header>
-          <div class="source-line"><span style="width:${(item.count / total) * 100}%; background:${["#168ca1", "#2aa866", "#e75d45", "#c79220"][index % 4]}"></span></div>
+          <div class="source-line"><span class="source-tone-${index % 4}" style="width:${(item.count / total) * 100}%"></span></div>
         </div>
       `
     )
@@ -417,6 +498,7 @@ async function publishMeal() {
 }
 
 function wireEvents() {
+  els.themeToggle?.addEventListener("click", toggleTheme);
   els.tabs.forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.view));
   });
@@ -440,8 +522,10 @@ function wireEvents() {
 }
 
 async function init() {
+  applyTheme(initialTheme());
   els.mealDate.value = todayIso();
   wireEvents();
+  switchView(initialView());
   await refresh();
 }
 

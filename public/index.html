@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="ledger">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>La Bouchée</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="theme-color" content="#f3f6f3">
+    <meta name="theme-color" content="#f7f1e3">
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
@@ -18,11 +18,17 @@
             <small>public food log maintained by tiny agents</small>
           </span>
         </a>
-        <nav class="tabs" aria-label="Views">
-          <button class="tab is-active" type="button" data-view="public">Public Board</button>
-          <button class="tab" type="button" data-view="admin">Log Meal</button>
-          <a class="export-link" href="/api/export" title="Export JSON">JSON</a>
-        </nav>
+        <div class="topbar-actions">
+          <nav class="tabs" aria-label="Views">
+            <button class="tab is-active" type="button" data-view="public">Public Board</button>
+            <button class="tab" type="button" data-view="admin">Log Meal</button>
+            <a class="export-link" href="/api/export" title="Export JSON">JSON</a>
+          </nav>
+          <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to Console theme" aria-pressed="false" title="Switch to Console theme">
+            <span class="theme-option is-active" data-theme-label="ledger">Ledger</span>
+            <span class="theme-option" data-theme-label="console">Console</span>
+          </button>
+        </div>
       </header>
 
       <main>
