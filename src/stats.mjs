@@ -36,42 +36,6 @@ function percent(value, total) {
   return Math.round((value / total) * 100);
 }
 
-function shannonEntropy(counts) {
-  const total = counts.reduce((sum, item) => sum + item.count, 0);
-  if (!total || counts.length < 2) return 0;
-  const entropy = counts.reduce((sum, item) => {
-    const p = item.count / total;
-    return sum - p * Math.log2(p);
-  }, 0);
-  const max = Math.log2(counts.length);
-  return Math.round((entropy / max) * 100);
-}
-
-function longestConsecutiveStreak(dates) {
-  const sorted = [...new Set(dates)].sort();
-  let longest = 0;
-  let current = 0;
-  let prev = null;
-
-  for (const date of sorted) {
-    if (!prev || daysBetween(prev, date) === 1) current += 1;
-    else current = 1;
-    longest = Math.max(longest, current);
-    prev = date;
-  }
-  return longest;
-}
-
-function currentLoggingStreak(daySet, endIso) {
-  let cursor = endIso;
-  let streak = 0;
-  while (daySet.has(cursor)) {
-    streak += 1;
-    cursor = addDays(cursor, -1);
-  }
-  return streak;
-}
-
 function displayLabel(label) {
   return String(label || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
@@ -155,17 +119,14 @@ function mealFingerprint(meal) {
   return (meal.foods || []).map(normalize).sort().join("|") || `${meal.mealType}:skipped`;
 }
 
-function buildDigest({ meals, topFoods, topTags, currentStreak, loggedDays, takeoutRatio, entropy }) {
+function buildDigest({ meals, topFoods, topTags, topCuisines, loggedDays }) {
   if (!meals.length) return "No public meals yet. The first entry will start the signal.";
 
   const anchors = [];
   if (topFoods[0]) anchors.push(`${displayLabel(topFoods[0].label)} is the current gravity well`);
+  if (topCuisines[0]) anchors.push(`${displayLabel(topCuisines[0].label)} is the dominant cuisine`);
   if (topTags[0]) anchors.push(`${displayLabel(topTags[0].label)} is the dominant tag`);
   anchors.push(`${loggedDays} public day${loggedDays === 1 ? "" : "s"} logged`);
-  if (currentStreak > 1) anchors.push(`${currentStreak}-day logging streak`);
-  if (takeoutRatio >= 30) anchors.push(`${takeoutRatio}% of meals came from restaurants or takeout`);
-  if (entropy >= 75) anchors.push("High variety week");
-  if (entropy <= 35 && meals.length > 5) anchors.push("Routine-heavy pattern");
   return anchors.join(". ") + ".";
 }
 
@@ -200,36 +161,19 @@ export function computeStats(mealsInput) {
 
   const allFoods = visibleMeals.flatMap((meal) => meal.foods || []).map(normalize).filter(Boolean);
   const allTags = visibleMeals.flatMap((meal) => meal.tags || []).map(normalize).filter((tag) => tag && tag !== "unclear-source");
-  const allCuisines = visibleMeals.map((meal) => meal.cuisine || "Mixed").filter(Boolean);
-  const allSources = visibleMeals.map((meal) => meal.source || "unknown");
+  const allCuisines = visibleMeals.map((meal) => normalize(meal.cuisine || "mixed")).filter(Boolean);
   const skippedCount = visibleMeals.filter((meal) => meal.tags?.includes("skipped") || meal.source === "skipped").length;
 
   const topFoods = countBy(allFoods).slice(0, 10);
   const topTags = countBy(allTags).slice(0, 10);
   const topCuisines = countBy(allCuisines).slice(0, 8);
-  const sourceCounts = countBy(allSources);
   const mealTypeCounts = countBy(visibleMeals.map((meal) => meal.mealType));
-  const entropy = shannonEntropy(topFoods);
 
   const breakfastDays = new Set(visibleMeals.filter((meal) => meal.mealType === "breakfast").map((meal) => meal.date)).size;
   const fullDays = [...daySet].filter((date) => MEAL_ORDER.every((mealType) => visibleMeals.some((meal) => meal.date === date && meal.mealType === mealType))).length;
   const uniqueFingerprints = new Set(visibleMeals.map(mealFingerprint)).size;
   const repeatGravity = percent(totalMeals - uniqueFingerprints, totalMeals);
-  const takeoutRatio = percent(visibleMeals.filter((meal) => meal.source === "takeout" || meal.source === "restaurant").length, totalMeals);
 
-  const foodDates = new Map();
-  for (const meal of visibleMeals) {
-    for (const food of meal.foods || []) {
-      const key = normalize(food);
-      if (!foodDates.has(key)) foodDates.set(key, new Set());
-      foodDates.get(key).add(meal.date);
-    }
-  }
-  const longestFoodStreak = [...foodDates.entries()]
-    .map(([label, dates]) => ({ label, days: longestConsecutiveStreak([...dates]) }))
-    .sort((a, b) => b.days - a.days || a.label.localeCompare(b.label))[0] || { label: "none yet", days: 0 };
-
-  const currentStreak = currentLoggingStreak(daySet, lastDate);
   const coverageDays = Math.max(1, daysBetween(firstDate, lastDate) + 1);
   const publicCompleteness = percent(totalMeals, coverageDays * MEAL_ORDER.length);
   const latestMeals = [...visibleMeals].sort((a, b) => `${b.date}:${MEAL_ORDER.indexOf(b.mealType)}`.localeCompare(`${a.date}:${MEAL_ORDER.indexOf(a.mealType)}`)).slice(0, 18);
@@ -242,22 +186,17 @@ export function computeStats(mealsInput) {
     loggedDays,
     firstDate,
     lastDate,
-    currentStreak,
     fullDays,
     skippedCount,
     publicCompleteness,
     breakfastConsistency: percent(breakfastDays, loggedDays),
     repeatGravity,
-    takeoutRatio,
-    entropy,
-    longestFoodStreak,
     mealTypeCounts,
-    sourceCounts,
     topFoods,
     topTags,
     topCuisines,
     routineMap: buildRoutineMap(visibleMeals, endIso),
-    digest: buildDigest({ meals: visibleMeals, topFoods, topTags, currentStreak, loggedDays, takeoutRatio, entropy }),
+    digest: buildDigest({ meals: visibleMeals, topFoods, topTags, topCuisines, loggedDays }),
     commentCount: recentComments.length,
     activeCommenters: new Set(recentComments.map((comment) => normalize(comment.name))).size,
     topCommenters,

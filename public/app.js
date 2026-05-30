@@ -46,7 +46,7 @@ const els = {
   recentMeals: $("#recentMeals"),
   routineMap: $("#routineMap"),
   topFoods: $("#topFoods"),
-  sourceSplit: $("#sourceSplit"),
+  cuisineMix: $("#cuisineMix"),
   themeToggle: $("#themeToggle"),
   themeColorMeta: document.querySelector('meta[name="theme-color"]')
 };
@@ -233,15 +233,10 @@ function mealCard(meal, { compact = false } = {}) {
 function renderTopline(stats) {
   $("#agentDigest").textContent = stats.digest;
   $("#totalMeals").textContent = stats.totalMeals;
-  $("#currentStreak").textContent = stats.currentStreak;
-  $("#entropyScore").textContent = stats.entropy;
 
   setRing("#breakfastRing", stats.breakfastConsistency);
   setRing("#publicRing", stats.publicCompleteness);
   setRing("#repeatRing", stats.repeatGravity);
-
-  $("#streakFood").textContent = titleCase(stats.longestFoodStreak.label);
-  $("#streakDays").textContent = `${stats.longestFoodStreak.days} days`;
 }
 
 function setRing(selector, value) {
@@ -308,14 +303,25 @@ function renderBars(stats) {
     .join("");
 }
 
-function renderSourceSplit(stats) {
-  const total = Math.max(1, stats.sourceCounts.reduce((sum, item) => sum + item.count, 0));
-  els.sourceSplit.innerHTML = stats.sourceCounts
+function renderCuisineMix(stats) {
+  const cuisines = stats.topCuisines || [];
+  if (!cuisines.length) {
+    els.cuisineMix.innerHTML = `<div class="panel-empty">No cuisine signal yet.</div>`;
+    return;
+  }
+
+  const total = Math.max(1, cuisines.reduce((sum, item) => sum + item.count, 0));
+  els.cuisineMix.innerHTML = cuisines
+    .slice(0, 6)
     .map(
       (item, index) => `
-        <div class="source-item">
-          <header><span>${titleCase(item.label)}</span><span>${item.count}</span></header>
-          <div class="source-line"><span class="source-tone-${index % 4}" style="width:${(item.count / total) * 100}%"></span></div>
+        <div class="cuisine-item">
+          <header>
+            <span>${titleCase(item.label)}</span>
+            <span>${Math.round((item.count / total) * 100)}%</span>
+          </header>
+          <div class="source-line"><span class="source-tone-${index % 4}" style="width:${Math.max(8, (item.count / total) * 100)}%"></span></div>
+          <small>${item.count} meal${item.count === 1 ? "" : "s"}</small>
         </div>
       `
     )
@@ -370,7 +376,7 @@ function render() {
   renderLatest(state.stats);
   renderRoutineMap(state.stats);
   renderBars(state.stats);
-  renderSourceSplit(state.stats);
+  renderCuisineMix(state.stats);
   renderFloatingComments(state.stats);
   renderRecent(state.stats);
   renderDraft();
