@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="ledger">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>La Bouchée</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="theme-color" content="#f3f6f3">
+    <meta name="theme-color" content="#f7f1e3">
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
@@ -18,11 +18,17 @@
             <small>public food log maintained by tiny agents</small>
           </span>
         </a>
-        <nav class="tabs" aria-label="Views">
-          <button class="tab is-active" type="button" data-view="public">Public Board</button>
-          <button class="tab" type="button" data-view="admin">Log Meal</button>
-          <a class="export-link" href="/api/export" title="Export JSON">JSON</a>
-        </nav>
+        <div class="topbar-actions">
+          <nav class="tabs" aria-label="Views">
+            <button class="tab is-active" type="button" data-view="public">Public Board</button>
+            <button class="tab" type="button" data-view="admin">Log Meal</button>
+            <a class="export-link" href="/api/export" title="Export JSON">JSON</a>
+          </nav>
+          <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to Console theme" aria-pressed="false" title="Switch to Console theme">
+            <span class="theme-option is-active" data-theme-label="ledger">Ledger</span>
+            <span class="theme-option" data-theme-label="console">Console</span>
+          </button>
+        </div>
       </header>
 
       <main>
@@ -37,14 +43,6 @@
               <div class="score-tile">
                 <span id="totalMeals">0</span>
                 <small>meals</small>
-              </div>
-              <div class="score-tile">
-                <span id="currentStreak">0</span>
-                <small>day streak</small>
-              </div>
-              <div class="score-tile">
-                <span id="entropyScore">0</span>
-                <small>variety</small>
               </div>
             </div>
           </section>
@@ -94,16 +92,6 @@
                 <p>How strongly the log bends toward familiar meals.</p>
               </div>
             </article>
-            <article class="metric-card">
-              <div class="streak-badge">
-                <strong id="streakFood">none</strong>
-                <span id="streakDays">0 days</span>
-              </div>
-              <div>
-                <h3>Longest Food Streak</h3>
-                <p>Consecutive logged days where one item reappeared.</p>
-              </div>
-            </article>
           </section>
 
           <section class="viz-grid" aria-label="Visual stats">
@@ -131,11 +119,11 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">source split</p>
-                  <h2>Home vs Outside</h2>
+                  <p class="eyebrow">cuisine mix</p>
+                  <h2>Cuisine Pattern</h2>
                 </div>
               </div>
-              <div id="sourceSplit" class="source-split"></div>
+              <div id="cuisineMix" class="cuisine-mix"></div>
             </article>
           </section>
 
