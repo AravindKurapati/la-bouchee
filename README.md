@@ -21,7 +21,9 @@ The app uses Node's built-in HTTP server, LangGraph for the intake workflow, and
 
 Open the app and go to the `Log Meal` tab. Pick the date and meal type, write the raw meal text, run the agents, then publish the generated public caption. The meal is written to Supabase when configured, otherwise it is appended to `data/meals.json`.
 
-On Vercel, persistent hosted writes require Supabase env vars. Without them, the app can still serve seeded data and run analysis, but public logging/comments remain blocked because serverless file writes are not durable.
+On Vercel, persistent hosted writes require Supabase env vars. Without them, the app can still serve seeded data, but public logging is blocked because serverless file writes are not durable.
+
+Publishing/deleting meals is **owner-only** once a hosted database is configured: you must sign in via magic link as `OWNER_EMAIL` (see [Authentication](#authentication)). Comments stay open to the public with a light per-IP rate limit. On localhost with the JSON fallback there is no auth gate.
 
 ## Backend
 
@@ -38,9 +40,37 @@ Run `supabase/schema.sql` in the Supabase SQL editor, then set these environment
 ```text
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_ANON_KEY=...        # public/publishable key (also exposed to the browser)
+OWNER_EMAIL=you@example.com  # the only address allowed to publish
 ```
 
-Use the service role key only on the server. It is intentionally never referenced by browser code.
+Use the service role key only on the server. It is intentionally never referenced by browser code. The anon key is public by design and is served to the browser via `GET /api/config`.
+
+### Authentication
+
+Writes (`/api/analyze`, `POST /api/meals`, `DELETE /api/meals/:id`) are restricted to the owner once a hosted database is present:
+
+1. Create the owner user matching `OWNER_EMAIL`. Either use the Supabase dashboard (**Auth → Users → Add user**) or run the helper once with your env loaded:
+
+   ```bash
+   node --env-file=.env scripts/create-owner.mjs
+   # or: npm run create:owner -- you@example.com
+   ```
+
+   Because sign-in uses `shouldCreateUser: false`, no other email can ever register.
+   - Also add your site origin (e.g. `https://your-app.vercel.app` and `http://localhost:4266`) under **Auth → URL Configuration → Redirect URLs**, or the magic-link redirect will be rejected.
+2. Open the app, switch to **Log Meal**, enter your email, and click **Send magic link**.
+3. Click the link in your inbox. You return signed in, and the meal console unlocks.
+
+The server verifies each write by calling `supabase.auth.getUser(token)` and checking the email against `OWNER_EMAIL`. If a hosted DB is configured but `SUPABASE_ANON_KEY`/`OWNER_EMAIL` are missing, writes **fail closed** with a 503. See `documents/FEATURE_owner_auth.md` and `SCHEMA.md`.
+
+### Tests
+
+```bash
+npm test
+```
+
+Covers stats computation, the agent parser/privacy redaction, the comment rate limiter, and the owner-auth gate (`node --test`, no extra dependencies).
 
 To import the seeded `data/meals.json` records into Supabase:
 

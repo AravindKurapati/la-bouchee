@@ -1,4 +1,5 @@
 import { runMealAgentGraph } from "../src/agentGraph.mjs";
+import { requireOwner } from "../src/auth.mjs";
 import { readBody, sendError } from "./_body.js";
 
 export default async function handler(req, res) {
@@ -8,6 +9,7 @@ export default async function handler(req, res) {
       res.status(405).json({ error: "Method not allowed" });
       return;
     }
+    await requireOwner(req);
     res.status(200).json(await runMealAgentGraph(await readBody(req)));
   } catch (error) {
     sendError(res, error);

@@ -1,3 +1,5 @@
+import { authHeaders, initAuth, onAuthChange, sendMagicLink, signOut } from "./auth.js";
+
 const mealTypes = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 const themeStorageKey = "la-bouchee-theme";
 const themeLabels = {
@@ -48,7 +50,16 @@ const els = {
   topFoods: $("#topFoods"),
   cuisineMix: $("#cuisineMix"),
   themeToggle: $("#themeToggle"),
-  themeColorMeta: document.querySelector('meta[name="theme-color"]')
+  themeColorMeta: document.querySelector('meta[name="theme-color"]'),
+  adminLayout: $(".admin-layout"),
+  authPanel: $("#authPanel"),
+  authSignedOut: $("#authSignedOut"),
+  authSignedIn: $("#authSignedIn"),
+  authWho: $("#authWho"),
+  signInForm: $("#signInForm"),
+  signInEmail: $("#signInEmail"),
+  signInStatus: $("#signInStatus"),
+  signOutButton: $("#signOutButton")
 };
 
 function isTheme(value) {
@@ -154,8 +165,8 @@ function showToast(message) {
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
-    headers: { "content-type": "application/json" },
-    ...options
+    ...options,
+    headers: { "content-type": "application/json", ...authHeaders(), ...(options.headers || {}) }
   });
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || "Request failed");
@@ -174,6 +185,38 @@ function switchView(view) {
   els.publicView.hidden = view !== "public";
   els.adminView.hidden = view !== "admin";
   els.tabs.forEach((button) => button.classList.toggle("is-active", button.dataset.view === view));
+}
+
+function renderAuth(authState) {
+  // Local dev with no hosted DB: no auth gate, console always available.
+  if (!authState.enabled) {
+    els.authPanel.hidden = true;
+    if (els.adminLayout) els.adminLayout.hidden = false;
+    return;
+  }
+
+  els.authPanel.hidden = false;
+  els.authSignedOut.hidden = authState.signedIn;
+  els.authSignedIn.hidden = !authState.signedIn;
+  if (els.adminLayout) els.adminLayout.hidden = !authState.signedIn;
+  if (authState.signedIn) {
+    els.authWho.textContent = `Signed in as ${authState.email}`;
+  }
+}
+
+async function submitSignIn(event) {
+  event.preventDefault();
+  const button = els.signInForm.querySelector("button");
+  button.disabled = true;
+  els.signInStatus.textContent = "Sending magic link...";
+  try {
+    await sendMagicLink(els.signInEmail.value.trim());
+    els.signInStatus.textContent = "Check your email for the sign-in link.";
+  } catch (error) {
+    els.signInStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function setMealType(mealType) {
@@ -513,6 +556,8 @@ function wireEvents() {
   });
   els.mealForm.addEventListener("submit", analyzeMeal);
   els.publishButton.addEventListener("click", publishMeal);
+  els.signInForm?.addEventListener("submit", submitSignIn);
+  els.signOutButton?.addEventListener("click", () => signOut());
   els.closeCommentDialog.addEventListener("click", closeCommentDialog);
   els.commentDialog.addEventListener("click", (event) => {
     if (event.target === els.commentDialog) closeCommentDialog();
@@ -531,8 +576,12 @@ async function init() {
   applyTheme(initialTheme());
   els.mealDate.value = todayIso();
   wireEvents();
+  onAuthChange(renderAuth);
+  // Hide the console until auth resolves so the form never flashes for visitors.
+  if (els.adminLayout) els.adminLayout.hidden = true;
   switchView(initialView());
   await refresh();
+  renderAuth(await initAuth());
 }
 
 init().catch((error) => {
