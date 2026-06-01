@@ -50,7 +50,14 @@ Use the service role key only on the server. It is intentionally never reference
 
 Writes (`/api/analyze`, `POST /api/meals`, `DELETE /api/meals/:id`) are restricted to the owner once a hosted database is present:
 
-1. In Supabase, go to **Auth → Users → Add user** and create the user matching `OWNER_EMAIL`. Because sign-in uses `shouldCreateUser: false`, no other email can ever register.
+1. Create the owner user matching `OWNER_EMAIL`. Either use the Supabase dashboard (**Auth → Users → Add user**) or run the helper once with your env loaded:
+
+   ```bash
+   node --env-file=.env scripts/create-owner.mjs
+   # or: npm run create:owner -- you@example.com
+   ```
+
+   Because sign-in uses `shouldCreateUser: false`, no other email can ever register.
    - Also add your site origin (e.g. `https://your-app.vercel.app` and `http://localhost:4266`) under **Auth → URL Configuration → Redirect URLs**, or the magic-link redirect will be rejected.
 2. Open the app, switch to **Log Meal**, enter your email, and click **Send magic link**.
 3. Click the link in your inbox. You return signed in, and the meal console unlocks.
