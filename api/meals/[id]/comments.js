@@ -1,4 +1,5 @@
 import { addComment } from "../../../src/store.mjs";
+import { enforceCommentRateLimit } from "../../../src/rateLimit.mjs";
 import { readBody, sendError } from "../../_body.js";
 
 export default async function handler(req, res) {
@@ -8,6 +9,7 @@ export default async function handler(req, res) {
       res.status(405).json({ error: "Method not allowed" });
       return;
     }
+    enforceCommentRateLimit(req);
     res.status(201).json(await addComment(req.query.id, await readBody(req)));
   } catch (error) {
     sendError(res, error);

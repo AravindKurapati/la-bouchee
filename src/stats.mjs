@@ -171,8 +171,11 @@ export function computeStats(mealsInput) {
 
   const breakfastDays = new Set(visibleMeals.filter((meal) => meal.mealType === "breakfast").map((meal) => meal.date)).size;
   const fullDays = [...daySet].filter((date) => MEAL_ORDER.every((mealType) => visibleMeals.some((meal) => meal.date === date && meal.mealType === mealType))).length;
-  const uniqueFingerprints = new Set(visibleMeals.map(mealFingerprint)).size;
-  const repeatGravity = percent(totalMeals - uniqueFingerprints, totalMeals);
+  // Skipped meals are excluded from repeat detection so empty days do not register
+  // as a "familiar" repeat. This matches buildRoutineMap's repeat counting.
+  const repeatMeals = visibleMeals.filter((meal) => !(meal.tags?.includes("skipped") || meal.source === "skipped"));
+  const uniqueFingerprints = new Set(repeatMeals.map(mealFingerprint)).size;
+  const repeatGravity = percent(repeatMeals.length - uniqueFingerprints, repeatMeals.length);
 
   const coverageDays = Math.max(1, daysBetween(firstDate, lastDate) + 1);
   const publicCompleteness = percent(totalMeals, coverageDays * MEAL_ORDER.length);

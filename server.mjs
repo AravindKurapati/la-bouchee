@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { runMealAgentGraph } from "./src/agentGraph.mjs";
 import { computeStats } from "./src/stats.mjs";
 import { addComment, deleteMeal, readMeals, saveMeal } from "./src/store.mjs";
+import { publicConfig, requireOwner } from "./src/auth.mjs";
+import { enforceCommentRateLimit } from "./src/rateLimit.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "public");
@@ -75,6 +77,11 @@ async function route(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = decodeURIComponent(url.pathname);
 
+  if (req.method === "GET" && pathname === "/api/config") {
+    sendJson(res, 200, publicConfig());
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/api/meals") {
     const meals = await readMeals();
     sendJson(res, 200, meals);
@@ -104,12 +111,14 @@ async function route(req, res) {
   }
 
   if (req.method === "POST" && pathname === "/api/analyze") {
+    await requireOwner(req);
     const body = await readBody(req);
     sendJson(res, 200, await runMealAgentGraph(body));
     return;
   }
 
   if (req.method === "POST" && pathname === "/api/meals") {
+    await requireOwner(req);
     const body = await readBody(req);
     const meal = body.foods && body.publicCaption ? body : await runMealAgentGraph(body);
     const saved = await saveMeal(meal);
@@ -119,6 +128,7 @@ async function route(req, res) {
 
   const commentMatch = pathname.match(/^\/api\/meals\/([^/]+)\/comments$/);
   if (req.method === "POST" && commentMatch) {
+    enforceCommentRateLimit(req);
     const body = await readBody(req);
     const saved = await addComment(commentMatch[1], body);
     sendJson(res, 201, saved);
@@ -126,6 +136,7 @@ async function route(req, res) {
   }
 
   if (req.method === "DELETE" && pathname.startsWith("/api/meals/")) {
+    await requireOwner(req);
     const id = pathname.split("/").at(-1);
     const deleted = await deleteMeal(id);
     sendJson(res, deleted ? 200 : 404, { deleted });

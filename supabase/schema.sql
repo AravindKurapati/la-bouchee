@@ -31,3 +31,23 @@ create index if not exists comments_meal_id_created_at_idx on public.comments(me
 
 alter table public.meals enable row level security;
 alter table public.comments enable row level security;
+
+-- RLS is defense-in-depth only: all app access uses the service-role key, which
+-- bypasses RLS. Enforcement of owner-only writes lives in src/auth.mjs.
+-- These policies grant public READ of public data and leave writes default-deny
+-- for anon/authenticated roles. See SCHEMA.md.
+
+drop policy if exists meals_public_read on public.meals;
+create policy meals_public_read on public.meals
+  for select
+  using (visibility = 'public');
+
+drop policy if exists comments_public_read on public.comments;
+create policy comments_public_read on public.comments
+  for select
+  using (
+    exists (
+      select 1 from public.meals m
+      where m.id = comments.meal_id and m.visibility = 'public'
+    )
+  );

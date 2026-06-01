@@ -139,6 +139,26 @@
         </section>
 
         <section id="adminView" class="view" hidden>
+          <section id="authPanel" class="auth-panel" hidden>
+            <div id="authSignedOut" hidden>
+              <p class="eyebrow">owner sign-in</p>
+              <h2>Sign in to log meals</h2>
+              <p class="auth-hint">Publishing is restricted to the owner. Enter your email to receive a magic link.</p>
+              <form id="signInForm" class="auth-form">
+                <label class="field">
+                  <span>Email</span>
+                  <input id="signInEmail" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
+                </label>
+                <button class="button primary" type="submit">Send magic link</button>
+              </form>
+              <p id="signInStatus" class="auth-hint" aria-live="polite"></p>
+            </div>
+            <div id="authSignedIn" class="auth-signed-in" hidden>
+              <span id="authWho"></span>
+              <button id="signOutButton" class="button secondary" type="button">Sign out</button>
+            </div>
+          </section>
+
           <section class="admin-layout" aria-labelledby="logMealTitle">
             <form id="mealForm" class="admin-panel">
               <div class="section-head">
