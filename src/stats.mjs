@@ -1,3 +1,5 @@
+import { toPublicMeal } from "./publicMeal.mjs";
+
 const MEAL_ORDER = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 
 function normalize(value) {
@@ -179,7 +181,12 @@ export function computeStats(mealsInput) {
 
   const coverageDays = Math.max(1, daysBetween(firstDate, lastDate) + 1);
   const publicCompleteness = percent(totalMeals, coverageDays * MEAL_ORDER.length);
-  const latestMeals = [...visibleMeals].sort((a, b) => `${b.date}:${MEAL_ORDER.indexOf(b.mealType)}`.localeCompare(`${a.date}:${MEAL_ORDER.indexOf(a.mealType)}`)).slice(0, 18);
+  // Public endpoint: strip owner-only fields (raw_text, redacted_text, etc.)
+  // from the meals returned to the board.
+  const latestMeals = [...visibleMeals]
+    .sort((a, b) => `${b.date}:${MEAL_ORDER.indexOf(b.mealType)}`.localeCompare(`${a.date}:${MEAL_ORDER.indexOf(a.mealType)}`))
+    .slice(0, 18)
+    .map(toPublicMeal);
   const recentComments = flattenComments(visibleMeals);
   const topCommenters = countBy(recentComments.map((comment) => normalize(comment.name))).slice(0, 6);
 

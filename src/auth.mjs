@@ -67,3 +67,14 @@ export async function requireOwner(req) {
 
   return data.user;
 }
+
+// Non-throwing owner check for read paths that serve owners full data and
+// everyone else a public projection. Returns true in pure-local JSON dev (no
+// hosted DB), where there is no auth gate and the console is always available.
+export async function isOwnerRequest(req) {
+  try {
+    return Boolean(await requireOwner(req)) || !isSupabaseConfigured();
+  } catch {
+    return false;
+  }
+}

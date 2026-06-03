@@ -48,6 +48,14 @@ Policies:
 - **No INSERT/UPDATE/DELETE policies** for anon/authenticated → default deny. Writes
   only ever happen via the service-role key after the owner check.
 
+**Read-side privacy boundary.** Because the app reads with the service-role key
+(which bypasses RLS), the policies above do **not** filter what `GET /api/meals`
+returns. The real boundary is `src/publicMeal.mjs::toPublicMeals` (and the
+`latestMeals` projection in `src/stats.mjs`): unauthenticated callers receive
+only `visibility = 'public'` meals with owner-only fields removed
+(`rawText`, `redactedText`, `privacyIssues`, `confidence`, `publishable`).
+`api/meals.js` serves full rows only when `isOwnerRequest` is true.
+
 ## Auth (no schema objects)
 Owner identity comes from Supabase Auth. The single allowed user is matched by
 `OWNER_EMAIL` (env). No custom tables, claims, or roles. See
