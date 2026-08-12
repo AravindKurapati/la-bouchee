@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { runMealAgentGraph } from "../src/agentGraph.mjs";
+import { runMealAgentGraph, runPrivacyAgent } from "../src/agentGraph.mjs";
 
 test("extracts foods and keeps multi-word items intact", async () => {
   const result = await runMealAgentGraph({
@@ -44,4 +44,18 @@ test("recognizes skipped meals", async () => {
 
 test("requires raw text", async () => {
   await assert.rejects(() => runMealAgentGraph({ rawText: "   " }), /rawText is required/);
+});
+
+test("runPrivacyAgent is exported and usable standalone", () => {
+  const result = runPrivacyAgent("lunch with someone@example.com");
+  assert.ok(result.redactedText.includes("[email]"));
+  assert.equal(result.publishable, false);
+  assert.ok(result.issues.some((issue) => issue.label === "email"));
+});
+
+test("runPrivacyAgent returns publishable true for clean text", () => {
+  const result = runPrivacyAgent("eggs and toast");
+  assert.equal(result.publishable, true);
+  assert.deepEqual(result.issues, []);
+  assert.equal(result.redactedText, "eggs and toast");
 });

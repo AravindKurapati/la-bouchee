@@ -153,7 +153,7 @@ function titleMealType(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function runPrivacyAgent(rawText) {
+export function runPrivacyAgent(rawText) {
   const issues = [];
   const patterns = [
     {
