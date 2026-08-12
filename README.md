@@ -25,6 +25,20 @@ On Vercel, persistent hosted writes require Supabase env vars. Without them, the
 
 Publishing/deleting meals is **owner-only** once a hosted database is configured: you must sign in via magic link as `OWNER_EMAIL` (see [Authentication](#authentication)). Comments stay open to the public with a light per-IP rate limit. On localhost with the JSON fallback there is no auth gate.
 
+### Quick CLI Logging
+
+For a fast personal log without opening the browser:
+
+```bash
+npm run log breakfast "eggs and toast"
+```
+
+This runs only the privacy check (not the full parser/tagger/caption agents) and saves
+directly as a public meal — it requires `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` in
+your local `.env` since it writes straight to Supabase, bypassing the owner-auth HTTP
+flow. If the privacy check finds a high-severity issue (email, phone, address), the
+entry is not saved.
+
 ## Backend
 
 The backend is split between `server.mjs` for local development and Vercel serverless handlers in `api/` for production. Both use the same shared modules in `src/`:

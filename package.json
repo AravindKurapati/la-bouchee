@@ -7,6 +7,7 @@
     "dev": "node server.mjs",
     "import:supabase": "node scripts/import-supabase.mjs",
     "create:owner": "node scripts/create-owner.mjs",
+    "log": "node --env-file=.env scripts/log-meal.mjs",
     "start": "node server.mjs",
     "test": "node --test test/"
   },

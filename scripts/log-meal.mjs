@@ -80,7 +80,7 @@ async function main() {
   }
 }
 
-const isDirectRun = process.argv[1] && import.meta.url === `file://${process.argv[1].replace(/\\/g, "/")}`;
+const isDirectRun = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
 if (isDirectRun) {
   main().catch((error) => {
     console.error(error.message || error);
