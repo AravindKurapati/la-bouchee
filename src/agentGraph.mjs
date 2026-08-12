@@ -1,6 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 
-const MEAL_TYPES = ["pre-breakfast", "breakfast", "lunch", "dinner"];
+export const MEAL_TYPES = ["pre-breakfast", "breakfast", "lunch", "dinner"];
 
 const MULTIWORD_FOODS = [
   "iced coffee",

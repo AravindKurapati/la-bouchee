@@ -118,7 +118,7 @@ function buildRoutineMap(meals, endIso) {
 }
 
 function mealFingerprint(meal) {
-  return (meal.foods || []).map(normalize).sort().join("|") || `${meal.mealType}:skipped`;
+  return (meal.foods || []).map(normalize).sort().join("|") || normalize(meal.publicCaption) || `${meal.mealType}:skipped`;
 }
 
 function buildDigest({ meals, topFoods, topTags, topCuisines, loggedDays }) {

@@ -39,6 +39,14 @@ your local `.env` since it writes straight to Supabase, bypassing the owner-auth
 flow. If the privacy check finds a high-severity issue (email, phone, address), the
 entry is not saved.
 
+**Note:** the CLI publishes your typed text as the public caption after only
+regex-based redaction (email/phone/address/price). Medium-severity signals — a
+person's name or a location clue like "near my apartment" — are **not** removed from
+the text; they are only reported as a warning printed *after* the meal is already
+saved and public. Review what you type before running the command, especially names
+and location details, since the CLI does not scrub or block on them the way the web
+UI's generated captions do.
+
 ## Backend
 
 The backend is split between `server.mjs` for local development and Vercel serverless handlers in `api/` for production. Both use the same shared modules in `src/`:

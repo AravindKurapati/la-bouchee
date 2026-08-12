@@ -82,6 +82,17 @@ test("skipped meals do not dilute repeat gravity of real repeats", () => {
   assert.equal(stats.repeatGravity, 50);
 });
 
+test("caption-only meals (e.g. CLI-logged, foods-less) with different captions do not register as repeats", () => {
+  const stats = computeStats([
+    meal({ date: "2026-05-01", mealType: "breakfast", foods: [], publicCaption: "eggs and toast" }),
+    meal({ date: "2026-05-02", mealType: "breakfast", foods: [], publicCaption: "ramen" })
+  ]);
+  // Different captions must fingerprint differently, otherwise every foods-less
+  // CLI-logged meal of the same mealType collapses onto the same fallback
+  // fingerprint and falsely inflates repeatGravity.
+  assert.equal(stats.repeatGravity, 0);
+});
+
 test("comments are flattened into recentComments", () => {
   const stats = computeStats([
     meal({

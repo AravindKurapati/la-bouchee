@@ -1,7 +1,7 @@
-import { runPrivacyAgent } from "../src/agentGraph.mjs";
+import { runPrivacyAgent, MEAL_TYPES } from "../src/agentGraph.mjs";
 import { saveMeal } from "../src/store.mjs";
 
-export const MEAL_TYPES = ["pre-breakfast", "breakfast", "lunch", "dinner"];
+export { MEAL_TYPES };
 
 const USAGE = 'Usage: npm run log <pre-breakfast|breakfast|lunch|dinner> "<dish text>"';
 
@@ -80,6 +80,11 @@ async function main() {
   }
 }
 
+// On Windows, process.argv[1] is a bare path like "D:\...\file.mjs". Building
+// "file://${path}" would only produce a 2-slash URL, which never equals Node's
+// real 3-slash import.meta.url ("file:///D:/..."), so a strict === check would
+// always fail there. Using endsWith() on the normalized path instead correctly
+// detects direct-run on all platforms.
 const isDirectRun = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
 if (isDirectRun) {
   main().catch((error) => {
