@@ -22,7 +22,15 @@ test("validateMealType rejects unknown meal types", () => {
   assert.throws(() => validateMealType("brunch"), /pre-breakfast \| breakfast \| lunch \| dinner/);
 });
 
-test("buildMeal sets public caption to the redacted text and today's date", () => {
+function todayLocalIso() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+test("buildMeal sets public caption to the redacted text and today's local date", () => {
   const meal = buildMeal({
     mealType: "lunch",
     rawText: "ramen and gyoza",
@@ -33,7 +41,7 @@ test("buildMeal sets public caption to the redacted text and today's date", () =
   assert.equal(meal.redactedText, "ramen and gyoza");
   assert.equal(meal.publicCaption, "ramen and gyoza");
   assert.equal(meal.visibility, "public");
-  assert.equal(meal.date, new Date().toISOString().slice(0, 10));
+  assert.equal(meal.date, todayLocalIso());
   assert.deepEqual(meal.foods, []);
   assert.deepEqual(meal.tags, []);
   assert.equal(meal.cuisine, "Mixed");
