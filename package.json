@@ -9,7 +9,8 @@
     "create:owner": "node scripts/create-owner.mjs",
     "log": "node --env-file=.env scripts/log-meal.mjs",
     "start": "node server.mjs",
-    "test": "node --test test/"
+    "test": "node --test test/",
+    "export:events": "node scripts/export-events.mjs"
   },
   "engines": {
     "node": ">=20"
