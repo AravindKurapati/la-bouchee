@@ -2003,12 +2003,12 @@
   },
   {
     "id": "meal_ref_d6983c41c6621eaa",
-    "createdAt": "2026-10-17T14:26:11.343Z",
+    "createdAt": "2026-10-17T14:27:31.040Z",
     "visibility": "public",
     "date": "2026-10-15",
     "mealType": "lunch",
-    "rawText": "rice + spinach pappu",
-    "redactedText": "rice + spinach pappu",
+    "rawText": "soya pulao",
+    "redactedText": "soya pulao",
     "foods": [],
     "tags": [],
     "cuisine": "Mixed",
@@ -2017,7 +2017,7 @@
     "confidence": 0,
     "privacyIssues": [],
     "publishable": true,
-    "publicCaption": "rice + spinach pappu",
+    "publicCaption": "soya pulao",
     "comments": []
   },
   {
