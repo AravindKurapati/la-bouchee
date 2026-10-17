@@ -2041,12 +2041,12 @@
   },
   {
     "id": "meal_ref_c4cc57e0a812649b",
-    "createdAt": "2026-10-17T14:26:12.838Z",
+    "createdAt": "2026-10-17T14:29:17.818Z",
     "visibility": "public",
     "date": "2026-10-15",
     "mealType": "dinner",
-    "rawText": "grapes",
-    "redactedText": "grapes",
+    "rawText": "2 bread + 2 egg + grapes",
+    "redactedText": "2 bread + 2 egg + grapes",
     "foods": [],
     "tags": [],
     "cuisine": "Mixed",
@@ -2055,7 +2055,7 @@
     "confidence": 0,
     "privacyIssues": [],
     "publishable": true,
-    "publicCaption": "grapes",
+    "publicCaption": "2 bread + 2 egg + grapes",
     "comments": []
   }
 ]
